@@ -547,7 +547,7 @@ imageUrls: []
       }
 
       setAdminForm({
-        name: '', category: 'Kurtis', price: '', compareAtPrice: '', stock: '10', description: '', sizes: 'S, M, L, XL', colors: '', imageUrl: []
+        name: '', category: 'Kurtis', price: '', compareAtPrice: '', stock: '10', description: '', sizes: 'S, M, L, XL', colors: '', imageUrls: []
       });
     } catch (err) {
       setNotice(err.message);
@@ -1095,7 +1095,7 @@ imageUrls: []
                       className="text-btn"
                       onClick={() => {
                         setEditingProduct(null);
-                        setAdminForm({ name: '', category: 'Kurtis', price: '', compareAtPrice: '', stock: '10', description: '', sizes: 'S, M, L, XL', colors: '', imageUrl: [] });
+                        setAdminForm({ name: '', category: 'Kurtis', price: '', compareAtPrice: '', stock: '10', description: '', sizes: 'S, M, L, XL', colors: '', imageUrls: [] });
                       }}
                     >
                       Cancel Edit
@@ -1760,7 +1760,11 @@ imageUrls: []
                     <div className="order-items-grid">
                       {o.items?.map((it, idx) => (
                         <div className="order-item-mini" key={idx}>
-                          <img src={it.image || 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=200&q=80'} alt="" />
+                          {it.image ? (
+                            <img src={it.image} alt={it.name} />
+                          ) : (
+                            <div className="no-product-image">No Image</div>
+                          )}
                           <div>
                             <strong style={{ fontSize: '13px' }}>{it.name}</strong>
                             <div className="muted" style={{ fontSize: '11px' }}>Size: {it.size} · Quantity: {it.quantity}</div>
@@ -2129,10 +2133,14 @@ imageUrls: []
         <div className="modal-backdrop" onClick={() => setSelectedProduct(null)}>
           <div className="product-modal" onClick={e => e.stopPropagation()}>
             <button className="modal-close icon-btn" onClick={() => setSelectedProduct(null)}><X /></button>
-            <img
-              src={selectedProduct.images?.[0]?.url || 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=900&q=80'}
-              alt={selectedProduct.name}
-            />
+            {selectedProduct.images?.[0]?.url ? (
+              <img
+                src={selectedProduct.images[0].url}
+                alt={selectedProduct.name}
+              />
+            ) : (
+              <div className="no-product-image">No Image</div>
+            )}
             <div className="product-modal-info">
               <p className="eyebrow">{selectedProduct.category}</p>
               <h2>{selectedProduct.name}</h2>
@@ -2455,7 +2463,11 @@ imageUrls: []
                 <div className="cart-items">
                   {cart.map(i => (
                     <div className="cart-item" key={i.key}>
-                      <img src={i.image || 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=300&q=80'} alt="" />
+                      {i.image ? (
+                        <img src={i.image} alt={i.name} />
+                      ) : (
+                        <div className="no-product-image">No Image</div>
+                      )}
                       <div className="cart-item-info">
                         <strong>{i.name}</strong>
                         <small>Size: {i.size}</small>
@@ -2515,11 +2527,15 @@ function ProductCard({ p, onOpen, onAdd, liked, onLike }) {
   return (
     <article className="product-card modern-product-card">
       <button className="product-image modern-product-image" onClick={onOpen}>
-        <img
-          loading="lazy"
-          src={p.images?.[0]?.url || 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=900&q=80'}
-          alt={p.name}
-        />
+        {p.images?.[0]?.url ? (
+          <img
+            loading="lazy"
+            src={p.images[0].url}
+            alt={p.name}
+          />
+        ) : (
+          <div className="no-product-image">No Image</div>
+        )}
         {isSoldOut ? (
           <span className="sold-out-badge">SOLD OUT</span>
         ) : (
