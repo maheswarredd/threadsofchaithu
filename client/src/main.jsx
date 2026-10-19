@@ -129,6 +129,8 @@ sizes: 'S, M, L, XL',
 colors: '',
 imageUrls: []
   });
+  const [imageCount, setImageCount] = useState(1);
+const [imageUploading, setImageUploading] = useState({});
   const [editingProduct, setEditingProduct] = useState(null);
   const [replyQueryModal, setReplyQueryModal] = useState(null);
   const [adminReplyText, setAdminReplyText] = useState('');
@@ -586,14 +588,18 @@ imageUrls: []
     }
   }
 
-  // Cloudinary image upload
-  async function handleImageUpload(file) {
+  // Cloudinary image upload - one image slot at a time
+async function handleImageUpload(file, imageIndex) {
   if (!file) return;
 
-  if (adminForm.imageUrls.length >= 6) {
-    setNotice('Maximum 6 product images are allowed.');
+  if (imageIndex < 0 || imageIndex >= imageCount) {
     return;
   }
+
+  setImageUploading(prev => ({
+    ...prev,
+    [imageIndex]: true
+  }));
 
   try {
     const sig = await request('/admin/upload-signature', {
@@ -605,11 +611,11 @@ imageUrls: []
 
     fd.append('file', file);
     fd.append('api_key', sig.apiKey);
-    fd.append('timestamp', sig.timestamp);
+    fd.append('timestamp', String(sig.timestamp));
     fd.append('folder', sig.folder);
     fd.append('signature', sig.signature);
 
-    const r = await fetch(
+    const response = await fetch(
       `https://api.cloudinary.com/v1_1/${sig.cloudName}/image/upload`,
       {
         method: 'POST',
@@ -617,22 +623,46 @@ imageUrls: []
       }
     );
 
-    const d = await r.json();
+    const data = await response.json();
 
-    if (!r.ok) {
-      throw new Error(d.error?.message || 'Upload failed');
+    if (!response.ok) {
+      console.error('Cloudinary upload error:', data);
+
+      throw new Error(
+        data?.error?.message ||
+        `Cloudinary upload failed (${response.status})`
+      );
     }
 
-    setAdminForm(prev => ({
-      ...prev,
-      imageUrls: [...prev.imageUrls, d.secure_url]
-    }));
+    if (!data.secure_url) {
+      throw new Error('Cloudinary did not return an image URL.');
+    }
+
+    setAdminForm(prev => {
+      const nextImages = [...prev.imageUrls];
+
+      nextImages[imageIndex] = data.secure_url;
+
+      return {
+        ...prev,
+        imageUrls: nextImages
+      };
+    });
 
     setNotice(
-      `Product image ${adminForm.imageUrls.length + 1} of 6 uploaded successfully.`
+      `Image ${imageIndex + 1} uploaded successfully.`
     );
-  } catch (err) {
-    setNotice(`Upload failed: ${err.message}`);
+  } catch (error) {
+    console.error('Image upload failed:', error);
+
+    setNotice(
+      `Image ${imageIndex + 1} upload failed: ${error.message}`
+    );
+  } finally {
+    setImageUploading(prev => ({
+      ...prev,
+      [imageIndex]: false
+    }));
   }
 }
   // Mark notifications read
@@ -1186,41 +1216,117 @@ imageUrls: []
                     />
                   </label>
 
-                  <label className="upload-box">
-  <Upload />
+                  <div className="product-image-manager">
 
-  <span>
-    {adminForm.imageUrls.length > 0
-      ? `${adminForm.imageUrls.length} of 6 images selected`
-      : 'Upload Product Images — 1 to 6'}
-  </span>
+  <label>
+    Number of Product Images
+    <select
+      value={imageCount}
+      onChange={e => {
+        const count = Number(e.target.value);
 
-  <input
-    type="file"
-    accept="image/*"
-    multiple
-    onChange={async e => {
-      const files = Array.from(e.target.files || []);
+        setImageCount(count);
 
-      if (!files.length) return;
+        setAdminForm(prev => ({
+          ...prev,
+          imageUrls: prev.imageUrls.slice(0, count)
+        }));
+      }}
+    >
+      <option value="1">1 Image</option>
+      <option value="2">2 Images</option>
+      <option value="3">3 Images</option>
+      <option value="4">4 Images</option>
+      <option value="5">5 Images</option>
+      <option value="6">6 Images</option>
+    </select>
+  </label>
 
-      const remainingSlots = 6 - adminForm.imageUrls.length;
+  <div className="admin-image-upload-grid">
 
-      if (files.length > remainingSlots) {
-        setNotice(
-          `You can select only ${remainingSlots} more image${remainingSlots === 1 ? '' : 's'}. Maximum is 6.`
-        );
-      }
+    {Array.from({ length: imageCount }).map((_, index) => {
+      const imageUrl = adminForm.imageUrls[index];
+      const uploading = imageUploading[index];
 
-      for (const file of files.slice(0, remainingSlots)) {
-        await handleImageUpload(file);
-      }
+      return (
+        <div
+          className="admin-image-slot"
+          key={index}
+        >
 
-      e.target.value = '';
-    }}
-  />
-</label>
+          <div className="admin-image-slot-title">
+            Image {index + 1}
+          </div>
 
+          <label className="admin-image-square">
+
+            {imageUrl ? (
+              <img
+                src={imageUrl}
+                alt={`Product image ${index + 1}`}
+              />
+            ) : uploading ? (
+              <div className="image-upload-loading">
+                Uploading...
+              </div>
+            ) : (
+              <div className="image-upload-placeholder">
+                <Upload />
+                <span>Select Image</span>
+              </div>
+            )}
+
+            <input
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={e => {
+                const file = e.target.files?.[0];
+
+                if (file) {
+                  handleImageUpload(file, index);
+                }
+
+                e.target.value = '';
+              }}
+            />
+
+          </label>
+
+          {imageUrl && (
+            <button
+              type="button"
+              className="remove-image-btn"
+              onClick={() => {
+                setAdminForm(prev => {
+                  const nextImages = [...prev.imageUrls];
+
+                  nextImages.splice(index, 1);
+
+                  return {
+                    ...prev,
+                    imageUrls: nextImages
+                  };
+                });
+              }}
+            >
+              Remove
+            </button>
+          )}
+
+        </div>
+      );
+    })}
+
+  </div>
+
+  <p className="image-upload-help">
+    Select 1 to 6 product images. Each image can be previewed
+    immediately before saving the product.
+  </p>
+
+</div>
+                  
                   {adminForm.imageUrls.length > 0 && (
   <div className="admin-image-preview-grid">
     {adminForm.imageUrls.map((url, index) => (
