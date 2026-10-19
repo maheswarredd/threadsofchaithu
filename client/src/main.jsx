@@ -523,11 +523,13 @@ const [imageUploading, setImageUploading] = useState({});
       description: adminForm.description.trim(),
       sizes: adminForm.sizes.split(',').map(s => s.trim()).filter(Boolean),
       colors: adminForm.colors.split(',').map(c => c.trim()).filter(Boolean),
-      images: adminForm.imageUrls.map(url => ({
-        url,
-        alt: adminForm.name
-      }))
-    };
+      images: adminForm.imageUrls
+      .filter(Boolean)
+      .map(url => ({
+       url,
+       alt: adminForm.name
+       }))
+       };
 
       if (editingProduct) {
         const updated = await request(`/admin/products/${editingProduct._id}`, {
@@ -549,8 +551,19 @@ const [imageUploading, setImageUploading] = useState({});
       }
 
       setAdminForm({
-        name: '', category: 'Kurtis', price: '', compareAtPrice: '', stock: '10', description: '', sizes: 'S, M, L, XL', colors: '', imageUrls: []
-      });
+  name: '',
+  category: 'Kurtis',
+  price: '',
+  compareAtPrice: '',
+  stock: '10',
+  description: '',
+  sizes: 'S, M, L, XL',
+  colors: '',
+  imageUrls: []
+});
+
+setImageCount(1);
+setImageUploading({});
     } catch (err) {
       setNotice(err.message);
     }
@@ -1126,6 +1139,8 @@ async function handleImageUpload(file, imageIndex) {
                       onClick={() => {
                         setEditingProduct(null);
                         setAdminForm({ name: '', category: 'Kurtis', price: '', compareAtPrice: '', stock: '10', description: '', sizes: 'S, M, L, XL', colors: '', imageUrls: [] });
+                        setImageCount(1);
+                        setImageUploading({});
                       }}
                     >
                       Cancel Edit
