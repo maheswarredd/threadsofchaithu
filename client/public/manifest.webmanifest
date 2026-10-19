@@ -1,0 +1,10 @@
+{
+  "name": "Threads of Chaithu Boutique",
+  "short_name": "Threads",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8f5ef",
+  "theme_color": "#702b43",
+  "description": "Shop thoughtfully crafted women's ethnic wear.",
+  "icons": []
+}
