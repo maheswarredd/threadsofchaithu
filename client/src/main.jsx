@@ -1858,8 +1858,9 @@ function App() {
               <p className="eyebrow light">THE NEW ETHNIC EDIT · 2026</p>
               <h1>Made for the<br /><em>moments</em> that<br />become memories.</h1>
               <p>Thoughtful silhouettes. Handpicked fabrics.<br />Everyday elegance, stitched with love.</p>
-              <button className="light-btn" onClick={() => goShop('All')}>
-                Explore the collection <ArrowRight size={17} />
+              <button className="light-btn hero-modern-btn" onClick={() => goShop('All')}>
+               Explore the collection
+              <ArrowRight size={16} />
               </button>
               <div className="hero-note">
                 <span>01 / 03</span>
@@ -2102,7 +2103,7 @@ function App() {
       {/* MODAL 2: COMMON SINGLE SIGN IN & REGISTRATION MODAL */}
       {authModal.open && (
         <div className="modal-backdrop" onClick={() => setAuthModal({ ...authModal, open: false })}>
-          <div className="auth-modal" onClick={e => e.stopPropagation()}>
+          <div className="auth-modal modern-auth-modal" onClick={e => e.stopPropagation()}>
             <button className="modal-close icon-btn" onClick={() => setAuthModal({ ...authModal, open: false })}>
               <X />
             </button>
@@ -2421,8 +2422,8 @@ function ProductCard({ p, onOpen, onAdd, liked, onLike }) {
   const isSoldOut = p.stock <= 0;
 
   return (
-    <article className="product-card">
-      <button className="product-image" onClick={onOpen}>
+    <article className="product-card modern-product-card">
+      <button className="product-image modern-product-image" onClick={onOpen}>
         <img
           loading="lazy"
           src={p.images?.[0]?.url || 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=900&q=80'}
