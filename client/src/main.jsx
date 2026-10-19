@@ -119,7 +119,15 @@ function App() {
   const [adminQueries, setAdminQueries] = useState([]);
   const [adminSettings, setAdminSettings] = useState(null);
   const [adminForm, setAdminForm] = useState({
-    name: '', category: 'Kurtis', price: '', compareAtPrice: '', stock: '10', description: '', sizes: 'S, M, L, XL', colors: '', imageUrl: ''
+   name: '',
+category: 'Kurtis',
+price: '',
+compareAtPrice: '',
+stock: '10',
+description: '',
+sizes: 'S, M, L, XL',
+colors: '',
+imageUrls: []
   });
   const [editingProduct, setEditingProduct] = useState(null);
   const [replyQueryModal, setReplyQueryModal] = useState(null);
@@ -501,19 +509,23 @@ function App() {
 
   // Admin product creation & editing
   async function handleSaveProduct(e) {
-    e.preventDefault();
-    try {
-      const payload = {
-        name: adminForm.name.trim(),
-        category: adminForm.category,
-        price: Number(adminForm.price),
-        compareAtPrice: Number(adminForm.compareAtPrice || 0),
-        stock: Number(adminForm.stock || 0),
-        description: adminForm.description.trim(),
-        sizes: adminForm.sizes.split(',').map(s => s.trim()).filter(Boolean),
-        colors: adminForm.colors.split(',').map(c => c.trim()).filter(Boolean),
-        images: adminForm.imageUrl ? [{ url: adminForm.imageUrl, alt: adminForm.name }] : []
-      };
+  e.preventDefault();
+
+  try {
+    const payload = {
+      name: adminForm.name.trim(),
+      category: adminForm.category,
+      price: Number(adminForm.price),
+      compareAtPrice: Number(adminForm.compareAtPrice || 0),
+      stock: Number(adminForm.stock || 0),
+      description: adminForm.description.trim(),
+      sizes: adminForm.sizes.split(',').map(s => s.trim()).filter(Boolean),
+      colors: adminForm.colors.split(',').map(c => c.trim()).filter(Boolean),
+      images: adminForm.imageUrls.map(url => ({
+        url,
+        alt: adminForm.name
+      }))
+    };
 
       if (editingProduct) {
         const updated = await request(`/admin/products/${editingProduct._id}`, {
@@ -535,7 +547,7 @@ function App() {
       }
 
       setAdminForm({
-        name: '', category: 'Kurtis', price: '', compareAtPrice: '', stock: '10', description: '', sizes: 'S, M, L, XL', colors: '', imageUrl: ''
+        name: '', category: 'Kurtis', price: '', compareAtPrice: '', stock: '10', description: '', sizes: 'S, M, L, XL', colors: '', imageUrl: []
       });
     } catch (err) {
       setNotice(err.message);
@@ -576,30 +588,53 @@ function App() {
 
   // Cloudinary image upload
   async function handleImageUpload(file) {
-    if (!file) return;
-    try {
-      const sig = await request('/admin/upload-signature', { method: 'POST', body: '{}' });
-      const fd = new FormData();
-      fd.append('file', file);
-      fd.append('api_key', sig.apiKey);
-      fd.append('timestamp', sig.timestamp);
-      fd.append('folder', sig.folder);
-      fd.append('signature', sig.signature);
+  if (!file) return;
 
-      const r = await fetch(`https://api.cloudinary.com/v1_1/${sig.cloudName}/image/upload`, {
-        method: 'POST',
-        body: fd
-      });
-      const d = await r.json();
-      if (!r.ok) throw new Error(d.error?.message || 'Upload failed');
-
-      setAdminForm(f => ({ ...f, imageUrl: d.secure_url }));
-      setNotice('Product image uploaded successfully via Cloudinary.');
-    } catch (err) {
-      setNotice(`Upload notice: ${err.message}. You can also enter an image URL directly.`);
-    }
+  if (adminForm.imageUrls.length >= 6) {
+    setNotice('Maximum 6 product images are allowed.');
+    return;
   }
 
+  try {
+    const sig = await request('/admin/upload-signature', {
+      method: 'POST',
+      body: '{}'
+    });
+
+    const fd = new FormData();
+
+    fd.append('file', file);
+    fd.append('api_key', sig.apiKey);
+    fd.append('timestamp', sig.timestamp);
+    fd.append('folder', sig.folder);
+    fd.append('signature', sig.signature);
+
+    const r = await fetch(
+      `https://api.cloudinary.com/v1_1/${sig.cloudName}/image/upload`,
+      {
+        method: 'POST',
+        body: fd
+      }
+    );
+
+    const d = await r.json();
+
+    if (!r.ok) {
+      throw new Error(d.error?.message || 'Upload failed');
+    }
+
+    setAdminForm(prev => ({
+      ...prev,
+      imageUrls: [...prev.imageUrls, d.secure_url]
+    }));
+
+    setNotice(
+      `Product image ${adminForm.imageUrls.length + 1} of 6 uploaded successfully.`
+    );
+  } catch (err) {
+    setNotice(`Upload failed: ${err.message}`);
+  }
+}
   // Mark notifications read
   async function markAllNotificationsRead() {
     try {
@@ -1060,7 +1095,7 @@ function App() {
                       className="text-btn"
                       onClick={() => {
                         setEditingProduct(null);
-                        setAdminForm({ name: '', category: 'Kurtis', price: '', compareAtPrice: '', stock: '10', description: '', sizes: 'S, M, L, XL', colors: '', imageUrl: '' });
+                        setAdminForm({ name: '', category: 'Kurtis', price: '', compareAtPrice: '', stock: '10', description: '', sizes: 'S, M, L, XL', colors: '', imageUrl: [] });
                       }}
                     >
                       Cancel Edit
@@ -1152,23 +1187,68 @@ function App() {
                   </label>
 
                   <label className="upload-box">
-                    <Upload />
-                    <span>{adminForm.imageUrl ? 'Image Selected — Click to change' : 'Upload Image (Cloudinary)'}</span>
-                    <input type="file" accept="image/*" onChange={e => handleImageUpload(e.target.files?.[0])} />
-                  </label>
+  <Upload />
 
-                  <label>
-                    Or Direct Image URL
-                    <input
-                      value={adminForm.imageUrl}
-                      onChange={e => setAdminForm({ ...adminForm, imageUrl: e.target.value })}
-                      placeholder="https://images.unsplash.com/..."
-                    />
-                  </label>
+  <span>
+    {adminForm.imageUrls.length > 0
+      ? `${adminForm.imageUrls.length} of 6 images selected`
+      : 'Upload Product Images — 1 to 6'}
+  </span>
 
-                  {adminForm.imageUrl && (
-                    <img className="upload-preview" src={adminForm.imageUrl} alt="Preview" />
-                  )}
+  <input
+    type="file"
+    accept="image/*"
+    multiple
+    onChange={async e => {
+      const files = Array.from(e.target.files || []);
+
+      if (!files.length) return;
+
+      const remainingSlots = 6 - adminForm.imageUrls.length;
+
+      if (files.length > remainingSlots) {
+        setNotice(
+          `You can select only ${remainingSlots} more image${remainingSlots === 1 ? '' : 's'}. Maximum is 6.`
+        );
+      }
+
+      for (const file of files.slice(0, remainingSlots)) {
+        await handleImageUpload(file);
+      }
+
+      e.target.value = '';
+    }}
+  />
+</label>
+
+                  {adminForm.imageUrls.length > 0 && (
+  <div className="admin-image-preview-grid">
+    {adminForm.imageUrls.map((url, index) => (
+      <div className="admin-image-preview" key={url}>
+        <img
+          className="upload-preview"
+          src={url}
+          alt={`Product preview ${index + 1}`}
+        />
+
+        <button
+          type="button"
+          className="remove-image-btn"
+          onClick={() => {
+            setAdminForm(prev => ({
+              ...prev,
+              imageUrls: prev.imageUrls.filter((_, i) => i !== index)
+            }));
+          }}
+        >
+          ×
+        </button>
+
+        <span>Image {index + 1}</span>
+      </div>
+    ))}
+  </div>
+)}
 
                   <button className="primary-btn" type="submit">
                     {editingProduct ? 'Update Product' : 'Save Product to Catalogue'} <ArrowRight size={16} />
@@ -1190,7 +1270,16 @@ function App() {
                   {adminProducts.map(p => (
                     <div className="admin-product" key={p._id} style={{ justifyContent: 'space-between' }}>
                       <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                        <img src={p.images?.[0]?.url || 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=300&q=80'} alt="" />
+                        {p.images?.[0]?.url ? (
+                        <img
+                        src={p.images[0].url}
+                        alt={p.name}
+                        />
+                        ) : (
+                        <div className="no-product-image">
+                        No Image
+                        </div>
+                        )}
                         <div>
                           <strong>{p.name}</strong>
                           <small>
@@ -1213,7 +1302,9 @@ function App() {
                               description: p.description || '',
                               sizes: (p.sizes || []).join(', '),
                               colors: (p.colors || []).join(', '),
-                              imageUrl: p.images?.[0]?.url || ''
+                              imageUrls: Array.isArray(p.images)
+                              ? p.images.map(image => image.url).filter(Boolean)
+                              : []
                             });
                             window.scrollTo({ top: 300, behavior: 'smooth' });
                           }}
