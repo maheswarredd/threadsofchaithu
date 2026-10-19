@@ -277,22 +277,50 @@ router.delete('/products/:id', async (req, res, next) => {
 
 // 4. Cloudinary Upload Signature
 router.post('/upload-signature', async (_req, res) => {
-  if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
-    return res.status(503).json({ message: 'Cloudinary is not configured.' });
+  try {
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+    const apiKey = process.env.CLOUDINARY_API_KEY;
+    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+    if (!cloudName || !apiKey || !apiSecret) {
+      return res.status(503).json({
+        message: 'Cloudinary is not configured correctly on the server.'
+      });
+    }
+
+    cloudinary.config({
+      cloud_name: cloudName,
+      api_key: apiKey,
+      api_secret: apiSecret
+    });
+
+    const timestamp = Math.round(Date.now() / 1000);
+
+    const folder = 'threads-of-chaithu/products';
+
+    const signature = cloudinary.utils.api_sign_request(
+      {
+        timestamp,
+        folder
+      },
+      apiSecret
+    );
+
+    return res.json({
+      cloudName,
+      apiKey,
+      timestamp,
+      folder,
+      signature
+    });
+  } catch (error) {
+    console.error('Cloudinary signature error:', error);
+
+    return res.status(500).json({
+      message: 'Unable to create Cloudinary upload signature.'
+    });
   }
-
-  const timestamp = Math.round(Date.now() / 1000);
-  const params = { timestamp, folder: 'threads-of-chaithu/products' };
-  const signature = cloudinary.utils.api_sign_request(params, process.env.CLOUDINARY_API_SECRET);
-
-  res.json({
-    ...params,
-    signature,
-    cloudName: process.env.CLOUDINARY_CLOUD_NAME,
-    apiKey: process.env.CLOUDINARY_API_KEY
-  });
 });
-
 // 5. Customer Support Queries Management
 router.get('/support-queries', async (req, res, next) => {
   try {
