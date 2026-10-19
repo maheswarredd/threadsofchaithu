@@ -55,7 +55,9 @@ router.post('/login', async (req, res, next) => {
     }
 
     // If customer has unverified email but email service is not configured, auto-verify for smooth operation
-    const hasEmailService = Boolean(process.env.BREVO_SMTP_USER && process.env.BREVO_SMTP_KEY);
+   const hasEmailService = Boolean(
+  process.env.BREVO_API_KEY && process.env.BREVO_SENDER_EMAIL
+);
     if (!user.emailVerified && user.role !== 'admin') {
       if (!hasEmailService) {
         user.emailVerified = true;
@@ -109,7 +111,9 @@ router.post('/signup', async (req, res, next) => {
       return res.status(409).json({ message: 'An account with this email already exists. Please sign in.' });
     }
 
-    const hasEmailService = Boolean(process.env.BREVO_SMTP_USER && process.env.BREVO_SMTP_KEY);
+    const hasEmailService = Boolean(
+  process.env.BREVO_API_KEY && process.env.BREVO_SENDER_EMAIL
+);
     const passwordHash = await bcrypt.hash(password, 12);
 
     let rawToken = '';
