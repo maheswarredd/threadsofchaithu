@@ -626,33 +626,54 @@ function App() {
       </div>
 
       {/* Main Header */}
-      <header className="header">
-        <button className="icon-btn mobile-only" onClick={() => setMobileMenu(!mobileMenu)} aria-label="Menu">
-          <Menu />
-        </button>
+      <header className="header modern-header">
+  <div className="header-left">
+    <button
+      className="icon-btn mobile-only modern-icon-btn"
+      onClick={() => setMobileMenu(!mobileMenu)}
+      aria-label="Menu"
+    >
+      <Menu />
+    </button>
 
-        <button className="wordmark" onClick={() => setPage('home')}>
-          <span className="monogram">TC</span>
-          <span>
-            <strong>THREADS OF CHAITHU</strong>
-            <small>WHERE EVERY THREAD TELLS A STORY</small>
-          </span>
-        </button>
+    <button className="wordmark modern-wordmark" onClick={() => setPage('home')}>
+      <span className="monogram modern-monogram">TC</span>
+      <span className="brand-copy">
+        <strong>THREADS OF CHAITHU</strong>
+        <small>WHERE EVERY THREAD TELLS A STORY</small>
+      </span>
+    </button>
+  </div>
 
-        {/* Navigation Links */}
-        <nav className={mobileMenu ? 'nav open' : 'nav'}>
-          <button onClick={() => { setPage('home'); setMobileMenu(false); }}>Home</button>
-          <button onClick={() => { goShop('All'); setMobileMenu(false); }}>Shop All</button>
-          <button onClick={() => { goShop('New Arrivals'); setMobileMenu(false); }}>New Arrivals</button>
-          <button onClick={() => { goShop('Kurtis'); setMobileMenu(false); }}>Kurtis</button>
-          <button onClick={() => { goShop('Ethnic Wear'); setMobileMenu(false); }}>Ethnic Wear</button>
-          <button onClick={() => { goShop('Dresses'); setMobileMenu(false); }}>Dresses</button>
-        </nav>
+  <nav className={mobileMenu ? 'nav open modern-nav' : 'nav modern-nav'}>
+    <button onClick={() => { setPage('home'); setMobileMenu(false); }}>
+      Home
+    </button>
 
+    <button onClick={() => { goShop('All'); setMobileMenu(false); }}>
+      Shop All
+    </button>
+
+    <button onClick={() => { goShop('New Arrivals'); setMobileMenu(false); }}>
+      New Arrivals
+    </button>
+
+    <button onClick={() => { goShop('Kurtis'); setMobileMenu(false); }}>
+      Kurtis
+    </button>
+
+    <button onClick={() => { goShop('Ethnic Wear'); setMobileMenu(false); }}>
+      Ethnic Wear
+    </button>
+
+    <button onClick={() => { goShop('Dresses'); setMobileMenu(false); }}>
+      Dresses
+    </button>
+  </nav>
         {/* Header Action Icons */}
         <div className="header-actions">
           {/* Search Toggle */}
-          <button className="icon-btn" aria-label="Search collection" onClick={() => { setPage('shop'); setTimeout(() => document.getElementById('search-input')?.focus(), 100); }}>
+          <button className="icon-btn modern-icon-btn" aria-label="Search collection" onClick={() => { setPage('shop'); setTimeout(() => document.getElementById('search-input')?.focus(), 100); }}>
             <Search />
           </button>
 
@@ -706,7 +727,7 @@ function App() {
 
           {/* Account / Single Sign-in Button */}
           <button
-            className="icon-btn"
+            className="icon-btn modern-icon-btn"
             aria-label="Account"
             onClick={() => {
               if (!user) {
