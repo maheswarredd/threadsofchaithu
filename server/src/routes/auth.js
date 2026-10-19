@@ -249,7 +249,10 @@ router.patch('/profile', requireAuth, async (req, res, next) => {
 
 // Sign Out
 router.post('/logout', (_req, res) => {
-  res.clearCookie('tc_session', cookieOptions());
+  const options = cookieOptions();
+  delete options.maxAge;
+
+  res.clearCookie('tc_session', options);
   res.json({ message: 'Signed out successfully.' });
 });
 
