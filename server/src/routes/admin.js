@@ -369,7 +369,10 @@ router.patch('/support-queries/:id', async (req, res, next) => {
 // 6. Settings status
 router.get('/settings', async (_req, res) => {
   res.json({
-    emailServiceConfigured: Boolean(process.env.BREVO_SMTP_USER && process.env.BREVO_SMTP_KEY),
+    emailServiceConfigured: Boolean(
+  process.env.BREVO_API_KEY &&
+  process.env.BREVO_SENDER_EMAIL
+),
     cloudinaryConfigured: Boolean(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET),
     adminEmail: process.env.ADMIN_EMAIL || 'admin@threadsofchaithu.example',
     upiId: process.env.UPI_ID || 'threadsofchaithu@oksbi',
