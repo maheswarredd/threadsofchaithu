@@ -15,6 +15,7 @@ const money = n => new Intl.NumberFormat('en-IN', { style: 'currency', currency:
 // Safe network request helper with Cookie + Bearer token
 async function request(path, options = {}) {
   const token = localStorage.getItem('tc_token');
+
   const headers = {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
